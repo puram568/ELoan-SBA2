@@ -40,12 +40,19 @@ public class ManagerServiceImpl implements ManagerService {
 	private SanctionInfoRepository sanctionInfoRepository;
 	
 	@Override
-	public List<LoanOutputDto> allProcessedLoans() {
+	public List<LoanOutputDto> allProcessedLoans() throws LoanNotFoundException {
 		List<LoanOutputDto> loanOutputDto = new ArrayList<LoanOutputDto>();
 		List<LoanDto> loanDto=new ArrayList<LoanDto>();
 		List<Long> loanAppId = loanRepository.findByStatus(1L);
 		List<Long> customerId = loanRepository.findCustomerByStatus(1L);
-		loanDto.addAll(loanRepository.findAllByStatus(1).stream().map(e->EMParser.parse(e)).collect(Collectors.toList()));
+		
+		List<LoanDto> collectLoanDto = loanRepository.findAllByStatus(1).stream().map(e->EMParser.parse(e)).collect(Collectors.toList());
+		if (!collectLoanDto.isEmpty()) {
+			loanDto.addAll(collectLoanDto);
+		}else
+		{
+			throw new LoanNotFoundException("No processed loans availble");
+		}
 		
 		for (int i = 0; i < loanDto.size(); i++) {
 			LoanOutputDto loanOD = new LoanOutputDto();
@@ -56,14 +63,7 @@ public class ManagerServiceImpl implements ManagerService {
 				.get(0));
 			loanOD.setProcessingDto(processingInfoRepository.findByLoanAppId(loanAppId.get(i)).stream().map(e->EMParser.parse(e)).collect(Collectors.toList()).get(0));
 			loanOD.setRemark(loanRepository.getRemark(loanAppId.get(i)));
-			
-			switch (loanRepository.getStatus(loanAppId.get(i))) {
-			case 0:loanOD.setStatus("Applied");break;
-			case 1:loanOD.setStatus("Processed");break;
-			case 2:loanOD.setStatus("Sanctioned");break;
-			case -1:loanOD.setStatus("Rejected");break;
-			default:break;
-			}
+			loanOD.setStatus("Processed");
 			loanOutputDto.add(loanOD);
 		}
 		
@@ -105,6 +105,7 @@ public class ManagerServiceImpl implements ManagerService {
 		if(loanRepository.getStatus(loanAppId)==1) {
 		
 			SanctionOutputDto sanctionOutputDto=new SanctionOutputDto();
+			
 			double amount=sanctionDto.getLoanAmountSanctioned();
 			double term=sanctionDto.getTermOfLoan();
 			double TermPaymentAmount= ( amount* (1 + (0.15*(term/12))));
