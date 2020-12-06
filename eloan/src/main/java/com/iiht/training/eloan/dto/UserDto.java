@@ -1,10 +1,26 @@
 package com.iiht.training.eloan.dto;
 
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
+
 public class UserDto {
 	private Long id;
+	@NotNull(message="First Name is not Null")
+    @Size(min=3,max=100,message = "First Name must be 3 to 100 characters length")
 	private String firstName;
+	@NotNull(message="Last Name is not Null")
+    @Size(min=3,max=100,message = "Last Name must be 3 to 100 characters length")
 	private String lastName;
+	@NotNull(message="Email is not Null")
+    @Size(min=3,max=100,message = "Email must be 3 to 100 characters length")
+	@Email(message="Email should be in proper format")
 	private String email;
+	@NotNull(message="Mobile number is mandate")
+    @Size(min=10,max=10,message = "Mobile number must be exactly ten digits")
+	@Pattern(regexp = "[1-9][0-9]{9}",message = "Mobile number must be exactly ten digits")
 	private String mobile;
 	public Long getId() {
 		return id;
